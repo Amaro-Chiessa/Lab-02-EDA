@@ -1,0 +1,190 @@
+import java.util.*;
+
+class Voto {
+    private int codigoVoto;
+    private int idVotante;
+    private int idCandidato;
+    private String horaVoto = "hh:mm:ss";
+
+    public Voto(int codigoVoto, int idVotante, int idCandidato, String horaVoto) {
+        this.codigoVoto = codigoVoto;
+        this.idVotante = idVotante;
+        this.idCandidato = idCandidato;
+        this.horaVoto = horaVoto;
+    }
+    public int getCodigoVoto() {
+        return codigoVoto;
+    }
+    public int getIdVotante() {
+        return idVotante;
+    }
+    public int getIdCandidato() {
+        return idCandidato;
+    }
+    public String getHoraVoto() {
+        return horaVoto;
+    }
+    public void setCodigoVoto(int codigoVoto) {
+        this.codigoVoto = codigoVoto;
+    }
+    public void setIdVotante(int idVotante) {
+        this.idVotante = idVotante;
+    }
+    public void setIdCandidato(int idCandidato) {
+        this.idCandidato = idCandidato;
+    }
+    public void setHoraVoto(String horaVoto) {
+        this.horaVoto = horaVoto;
+    }
+}
+
+class Candidato {
+    private int codigoCandidato;
+    private String nombreCompleto;
+    private String agrupacionPolitica;
+    private Queue<Voto> listaVotos;
+
+    public Candidato(int codigoCandidato, String nombreCompleto, String agrupacionPolitica) {
+        this.codigoCandidato = codigoCandidato;
+        this.nombreCompleto = nombreCompleto;
+        this.agrupacionPolitica = agrupacionPolitica;
+        this.listaVotos = new LinkedList<>();
+    }
+    public int getCodigoCandidato() {
+        return codigoCandidato;
+    }
+
+    public String getNombreCompleto() {
+        return nombreCompleto;
+    }
+
+    public String getAgrupacionPolitica() {
+        return agrupacionPolitica;
+    }
+
+    public Queue<Voto> getListaVotos() {
+        return listaVotos;
+    }
+
+    public void setCodigoCandidato(int codigoCandidato) {
+        this.codigoCandidato = codigoCandidato;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
+    }
+
+    public void setAgrupacionPolitica(String agrupacionPolitica) {
+        this.agrupacionPolitica = agrupacionPolitica;
+    }
+
+    public void registrarVoto(Voto voto) {
+        listaVotos.add(voto);
+    }
+}
+
+class Votante {
+    private int codigoVotante;
+    private String nombreVotante;
+    private boolean realizoVoto;
+
+    public Votante(int codigoVotante, String nombreVotante) {
+        this.codigoVotante = codigoVotante;
+        this.nombreVotante = nombreVotante;
+        this.realizoVoto = false;
+    }
+    public int getCodigoVotante() {
+        return codigoVotante;
+    }
+    public String getNombreVotante() {
+        return nombreVotante;
+    }
+
+    public boolean haVotado() {
+        return realizoVoto;
+    }
+    public void setCodigoVotante(int codigoVotante) {
+        this.codigoVotante = codigoVotante;
+    }
+    public void setNombreVotante(String nombreVotante) {
+        this.nombreVotante = nombreVotante;
+    }
+    public void marcarComoVotado() {
+        this.realizoVoto = true;
+    }
+}
+class UrnaElectoral {
+    private LinkedList<Candidato> candidatosRegistrados;
+    private Stack<Voto> registroDeVotos;
+    private Queue<Voto> votosMarcados;
+    private int contadorVotos;
+
+    public UrnaElectoral() {
+        this.candidatosRegistrados = new LinkedList<>();
+        this.registroDeVotos = new Stack<>();
+        this.votosMarcados = new LinkedList<>();
+        this.contadorVotos = 1;
+    }
+    public boolean validarVotante(Votante votante) {
+        return votante.haVotado();
+    }
+    public boolean emitirVoto(Votante votante, int idCandidato) {
+        if (validarVotante(votante)) {
+            System.out.println("El votante ya ha votado.");
+            return false;
+        }
+        Candidato elegido = null;
+        for (Candidato candidato : candidatosRegistrados) {
+            if (candidato.getCodigoCandidato() == idCandidato) {
+                elegido = candidato;
+                break;
+            }
+        }
+        if (elegido == null) {
+            System.out.println("Candidato no encontrado.");
+            return false;
+        }
+        String horaActual = "hh:mm:ss"; // Placeholder (mejorar luego)
+        Voto nuevoVoto = new Voto(contadorVotos++, votante.getCodigoVotante(), idCandidato, horaActual);
+        elegido.registrarVoto(nuevoVoto);
+        registroDeVotos.push(nuevoVoto);
+        votante.marcarComoVotado();
+
+        System.out.println("Voto emitido correctamente.");
+        return true;
+    }
+    public boolean reportarIrregularidad(Candidato candidato, int idVoto) {
+        for (Voto voto : votosMarcados) {
+            if (voto.getCodigoVoto() == idVoto) {
+                System.out.println("Este voto ya fue reportado anteriormente.");
+                return false;
+            }
+        }
+        for (Voto voto : candidato.getListaVotos()) {
+            if (voto.getCodigoVoto() == idVoto) {
+                votosMarcados.add(voto);
+                System.out.println("Voto reportado exitosamente.");
+                return true;
+            }
+        }
+        System.out.println("No se encontró el voto en los registros del candidato.");
+        return false;
+    }
+    public Map<Integer, Integer> calcularResultados() {
+        Map<Integer, Integer> conteo = new HashMap<>();
+        for (Voto voto : registroDeVotos) {
+            int idCandidato = voto.getIdCandidato();
+            conteo.put(idCandidato, conteo.getOrDefault(idCandidato, 0) + 1);
+        }
+        return conteo;
+    }
+    public LinkedList<Candidato> getCandidatosRegistrados() {
+        return candidatosRegistrados;
+    }
+    public Stack<Voto> getRegistroDeVotos() {
+        return registroDeVotos;
+    }
+    public Queue<Voto> getVotosMarcados() {
+        return votosMarcados;
+    }
+}
